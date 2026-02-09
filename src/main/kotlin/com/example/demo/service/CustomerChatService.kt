@@ -25,6 +25,8 @@ data class ChatSession(
 class CustomerChatService {
     private val sessions = ConcurrentHashMap<String, ChatSession>()
     private val adminUIs = ConcurrentHashMap.newKeySet<UI>()
+    private val adminRefreshCallbacks = ConcurrentHashMap<UI, () -> Unit>()
+    private val guestRefreshCallbacks = ConcurrentHashMap<String, () -> Unit>()
     private val sessionIdCounter = AtomicInteger(1)
     
     // 创建新的游客会话
@@ -64,7 +66,8 @@ class CustomerChatService {
         
         // 推送给游客
         session.guestUI?.access {
-            // 游客UI会自动刷新
+            guestRefreshCallbacks[sessionId]?.invoke()
+            session.guestUI?.push()
         }
         
         // 通知其他管理员
@@ -72,13 +75,25 @@ class CustomerChatService {
     }
     
     // 注册管理员UI
-    fun registerAdmin(ui: UI) {
+    fun registerAdmin(ui: UI, refreshCallback: () -> Unit) {
         adminUIs.add(ui)
+        adminRefreshCallbacks[ui] = refreshCallback
     }
     
     // 注销管理员UI
     fun unregisterAdmin(ui: UI) {
         adminUIs.remove(ui)
+        adminRefreshCallbacks.remove(ui)
+    }
+    
+    // 注册游客刷新回调
+    fun registerGuestRefresh(sessionId: String, refreshCallback: () -> Unit) {
+        guestRefreshCallbacks[sessionId] = refreshCallback
+    }
+    
+    // 注销游客刷新回调
+    fun unregisterGuestRefresh(sessionId: String) {
+        guestRefreshCallbacks.remove(sessionId)
     }
     
     // 更新游客在线状态
@@ -112,7 +127,8 @@ class CustomerChatService {
     private fun notifyAdmins() {
         adminUIs.forEach { ui ->
             ui.access {
-                // UI会自动刷新
+                adminRefreshCallbacks[ui]?.invoke()
+                ui.push()
             }
         }
     }
