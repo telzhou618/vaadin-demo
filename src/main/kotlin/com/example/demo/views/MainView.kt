@@ -38,6 +38,12 @@ class MainView : KComposite() {
             h3("示例页面")
             routerLink(text = "组件演示", viewType = ComponentsDemo::class)
             routerLink(text = "Push 演示", viewType = PushDemo::class)
+            
+            hr()
+            
+            h3("客服系统 Demo")
+            routerLink(text = "游客咨询页面", viewType = GuestChatView::class)
+            routerLink(text = "客服管理端", viewType = AdminChatView::class)
         }
     }
 }
