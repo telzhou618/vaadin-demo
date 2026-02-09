@@ -2,6 +2,10 @@ package com.example.demo.views
 
 import com.example.demo.service.ChatSession
 import com.example.demo.service.CustomerChatService
+import com.github.mvysny.karibudsl.v10.h3
+import com.github.mvysny.karibudsl.v10.horizontalLayout
+import com.github.mvysny.karibudsl.v10.span
+import com.github.mvysny.karibudsl.v10.textField
 import com.vaadin.flow.component.AttachEvent
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.Key
@@ -15,7 +19,6 @@ import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
-import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Route
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.format.DateTimeFormatter
@@ -164,21 +167,20 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         val session = chatService.getSession(sessionId) ?: return
         chatArea.removeAll()
         // 头部
-        val header = HorizontalLayout(
-            H3(session.guestName).apply {
-                style.set("margin", "0")
-            },
-            Span(if (session.isOnline) "● 在线" else "○ 离线").apply {
-                addClassName(if (session.isOnline) "text-success" else "text-disabled")
-            }
-        ).apply {
+        val header = horizontalLayout {
             alignItems = FlexComponent.Alignment.CENTER
             setWidthFull()
             addClassName("p-m")
             style.set("background-color", "white")
             style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.05)")
-        }
 
+            h3(session.guestName) {
+                style.set("margin", "0")
+            }
+            span(if (session.isOnline) "● 在线" else "○ 离线") {
+                addClassName(if (session.isOnline) "text-success" else "text-disabled")
+            }
+        }
         // 消息区域
         messagesArea.apply {
             setWidthFull()
@@ -187,7 +189,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         }
 
         // 输入区域
-        val messageField = TextField().apply {
+        val messageField = textField {
             placeholder = "输入消息..."
             setWidthFull()
             style.set("border-radius", "20px")
