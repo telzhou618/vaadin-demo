@@ -120,6 +120,9 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
                     }
                     messagesArea.add(wrapper)
                 }
+                
+                // 滚动到底部
+                messagesArea.element.executeJs("this.scrollTop = this.scrollHeight")
             }
         }
     }

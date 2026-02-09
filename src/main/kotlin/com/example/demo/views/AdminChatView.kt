@@ -238,6 +238,9 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
                     }
                     messagesArea.add(wrapper)
                 }
+                
+                // 滚动到底部
+                messagesArea.element.executeJs("this.scrollTop = this.scrollHeight")
             }
         }
     }
