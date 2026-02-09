@@ -29,12 +29,21 @@ class CustomerChatService {
     private val guestRefreshCallbacks = ConcurrentHashMap<String, () -> Unit>()
     private val sessionIdCounter = AtomicInteger(1)
     
-    // 创建新的游客会话
-    fun createGuestSession(guestUI: UI): ChatSession {
-        val sessionId = "GUEST-${sessionIdCounter.getAndIncrement()}"
-        val guestName = "游客 $sessionId"
-        val session = ChatSession(sessionId, guestName, guestUI = guestUI)
-        sessions[sessionId] = session
+    // 创建新的游客会话（使用客户端 ID）
+    fun createGuestSession(guestUI: UI, clientId: String): ChatSession {
+        // 如果已存在该客户端的会话，则恢复会话
+        val existingSession = sessions[clientId]
+        if (existingSession != null) {
+            existingSession.guestUI = guestUI
+            existingSession.isOnline = true
+            notifyAdmins()
+            return existingSession
+        }
+        
+        // 创建新会话
+        val guestName = "游客 ${clientId.takeLast(8)}"
+        val session = ChatSession(clientId, guestName, guestUI = guestUI)
+        sessions[clientId] = session
         
         // 发送欢迎消息
         val welcomeMsg = ChatMessage("客服", "您好！欢迎咨询，请问有什么可以帮助您的？")

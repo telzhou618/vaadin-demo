@@ -80,9 +80,22 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
     override fun onAttach(attachEvent: AttachEvent) {
         super.onAttach(attachEvent)
         ui.ifPresent { ui ->
-            session = chatService.createGuestSession(ui)
-            chatService.registerGuestRefresh(session.sessionId) { refreshMessages() }
-            refreshMessages()
+            // 从浏览器 localStorage 获取或生成客户端 ID
+            ui.page.executeJs(
+                """
+                let clientId = localStorage.getItem('guestClientId');
+                if (!clientId) {
+                    clientId = 'GUEST-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('guestClientId', clientId);
+                }
+                return clientId;
+                """
+            ).then { result ->
+                val clientId = result.asString()
+                session = chatService.createGuestSession(ui, clientId)
+                chatService.registerGuestRefresh(session.sessionId) { refreshMessages() }
+                refreshMessages()
+            }
         }
     }
     
