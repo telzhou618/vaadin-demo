@@ -28,31 +28,38 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
     
     init {
         setSizeFull()
-        maxWidth = "800px"
+        maxWidth = "900px"
         style.set("margin", "0 auto")
+        isPadding = false
         
         // 头部
-        val header = HorizontalLayout(H2("在线客服")).apply {
+        val header = HorizontalLayout(H2("💬 在线客服").apply {
+            style.set("margin", "0")
+        }).apply {
             setWidthFull()
-            addClassNames("bg-primary", "text-primary-contrast", "p-m")
+            addClassNames("bg-primary", "text-primary-contrast", "p-l")
+            style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
         }
         
         // 消息区域
         messagesArea.apply {
             setWidthFull()
-            addClassNames("bg-contrast-5", "p-m")
+            addClassName("p-m")
             style.set("flex", "1")
             style.set("overflow-y", "auto")
+            style.set("background", "linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%)")
         }
         
         // 输入区域
         messageField.apply {
             placeholder = "输入消息..."
             setWidthFull()
+            style.set("border-radius", "20px")
         }
         
         val sendButton = Button("发送").apply {
             addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+            style.set("border-radius", "20px")
             addClickListener { sendMessage() }
         }
         
@@ -61,6 +68,8 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
         val inputLayout = HorizontalLayout(messageField, sendButton).apply {
             setWidthFull()
             addClassName("p-m")
+            style.set("background-color", "white")
+            style.set("box-shadow", "0 -2px 4px rgba(0,0,0,0.05)")
             expand(messageField)
         }
         
@@ -98,20 +107,44 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
                 messagesArea.removeAll()
                 session.messages.forEach { msg ->
                     val isAdmin = msg.from == "客服"
-                    val bubble = Div(
-                        Span(msg.from).apply { addClassName("text-xs") },
-                        Div(msg.content),
-                        Span(msg.timestamp.format(timeFormatter)).apply { addClassName("text-xs") }
-                    ).apply {
+                    val bubble = Div().apply {
                         addClassName("p-m")
-                        style.set("border-radius", "var(--lumo-border-radius-m)")
+                        style.set("border-radius", "12px")
                         style.set("max-width", "70%")
+                        style.set("word-wrap", "break-word")
+                        
                         if (isAdmin) {
                             style.set("background-color", "white")
-                            style.set("box-shadow", "var(--lumo-box-shadow-xs)")
+                            style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.12)")
                         } else {
                             addClassNames("bg-primary", "text-primary-contrast")
+                            style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.2)")
                         }
+                        
+                        // 发送者名称
+                        add(Span(msg.from).apply {
+                            addClassName("text-xs")
+                            style.set("font-weight", "600")
+                            style.set("display", "block")
+                            style.set("margin-bottom", "4px")
+                            if (!isAdmin) {
+                                style.set("opacity", "0.9")
+                            }
+                        })
+                        
+                        // 消息内容
+                        add(Div(msg.content).apply {
+                            style.set("line-height", "1.5")
+                            style.set("margin-bottom", "4px")
+                        })
+                        
+                        // 时间戳
+                        add(Span(msg.timestamp.format(timeFormatter)).apply {
+                            addClassName("text-xs")
+                            style.set("opacity", "0.7")
+                            style.set("display", "block")
+                            style.set("text-align", "right")
+                        })
                     }
                     
                     val wrapper = HorizontalLayout(bubble).apply {

@@ -31,21 +31,27 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
     
     init {
         setSizeFull()
+        isPadding = false
         
         // 左侧用户列表
         val leftPanel = VerticalLayout().apply {
-            width = "300px"
+            width = "320px"
             setHeightFull()
             isPadding = false
+            style.set("border-right", "1px solid var(--lumo-contrast-10pct)")
             
-            add(HorizontalLayout(H3("客服管理端")).apply {
+            add(HorizontalLayout(H3("👥 客服管理端").apply {
+                style.set("margin", "0")
+            }).apply {
                 setWidthFull()
-                addClassNames("bg-primary", "text-primary-contrast", "p-m")
+                addClassNames("bg-primary", "text-primary-contrast", "p-l")
+                style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
             })
             
             userList.apply {
                 setWidthFull()
                 style.set("overflow-y", "auto")
+                style.set("background-color", "white")
             }
             add(userList)
             expand(userList)
@@ -55,10 +61,11 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         chatArea.apply {
             setHeightFull()
             isPadding = false
-            addClassName("bg-contrast-5")
+            style.set("background", "linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%)")
             
             add(Div(Span("👈 请选择用户开始聊天").apply {
                 addClassName("text-secondary")
+                style.set("font-size", "18px")
             }).apply {
                 setSizeFull()
                 style.set("display", "flex")
@@ -116,8 +123,11 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             setWidthFull()
             addClassName("p-m")
             style.set("cursor", "pointer")
+            style.set("border-bottom", "1px solid var(--lumo-contrast-5pct)")
+            style.set("transition", "background-color 0.2s")
+            
             if (session.sessionId == selectedSessionId) {
-                addClassName("bg-primary-10pct")
+                style.set("background-color", "var(--lumo-primary-color-10pct)")
             }
             
             add(statusIcon, nameLabel)
@@ -126,9 +136,10 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
                 add(Span(session.unreadCount.toString()).apply {
                     style.set("background", "var(--lumo-error-color)")
                     style.set("color", "white")
-                    style.set("border-radius", "10px")
-                    style.set("padding", "2px 6px")
+                    style.set("border-radius", "12px")
+                    style.set("padding", "2px 8px")
                     style.set("font-size", "11px")
+                    style.set("font-weight", "600")
                     style.set("margin-left", "auto")
                 })
             }
@@ -153,13 +164,18 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         
         // 头部
         val header = HorizontalLayout(
-            H3(session.guestName),
+            H3(session.guestName).apply {
+                style.set("margin", "0")
+            },
             Span(if (session.isOnline) "● 在线" else "○ 离线").apply {
                 addClassName(if (session.isOnline) "text-success" else "text-disabled")
+                style.set("font-size", "14px")
             }
         ).apply {
             setWidthFull()
             addClassName("p-m")
+            style.set("background-color", "white")
+            style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.05)")
         }
         
         // 消息区域
@@ -173,10 +189,12 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         val messageField = TextField().apply {
             placeholder = "输入消息..."
             setWidthFull()
+            style.set("border-radius", "20px")
         }
         
         val sendButton = Button("发送").apply {
             addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+            style.set("border-radius", "20px")
             addClickListener {
                 val content = messageField.value?.trim() ?: ""
                 if (content.isNotEmpty()) {
@@ -201,6 +219,8 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         val inputLayout = HorizontalLayout(messageField, sendButton).apply {
             setWidthFull()
             addClassName("p-m")
+            style.set("background-color", "white")
+            style.set("box-shadow", "0 -2px 4px rgba(0,0,0,0.05)")
             expand(messageField)
         }
         
@@ -216,20 +236,44 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
                 messagesArea.removeAll()
                 session.messages.forEach { msg ->
                     val isAdmin = msg.from == "客服"
-                    val bubble = Div(
-                        Span(msg.from).apply { addClassName("text-xs") },
-                        Div(msg.content),
-                        Span(msg.timestamp.format(timeFormatter)).apply { addClassName("text-xs") }
-                    ).apply {
+                    val bubble = Div().apply {
                         addClassName("p-m")
-                        style.set("border-radius", "var(--lumo-border-radius-m)")
+                        style.set("border-radius", "12px")
                         style.set("max-width", "70%")
+                        style.set("word-wrap", "break-word")
+                        
                         if (isAdmin) {
                             addClassNames("bg-primary", "text-primary-contrast")
+                            style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.2)")
                         } else {
                             style.set("background-color", "white")
-                            style.set("box-shadow", "var(--lumo-box-shadow-xs)")
+                            style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.12)")
                         }
+                        
+                        // 发送者名称
+                        add(Span(msg.from).apply {
+                            addClassName("text-xs")
+                            style.set("font-weight", "600")
+                            style.set("display", "block")
+                            style.set("margin-bottom", "4px")
+                            if (isAdmin) {
+                                style.set("opacity", "0.9")
+                            }
+                        })
+                        
+                        // 消息内容
+                        add(Div(msg.content).apply {
+                            style.set("line-height", "1.5")
+                            style.set("margin-bottom", "4px")
+                        })
+                        
+                        // 时间戳
+                        add(Span(msg.timestamp.format(timeFormatter)).apply {
+                            addClassName("text-xs")
+                            style.set("opacity", "0.7")
+                            style.set("display", "block")
+                            style.set("text-align", "right")
+                        })
                     }
                     
                     val wrapper = HorizontalLayout(bubble).apply {
