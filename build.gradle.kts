@@ -29,6 +29,9 @@ dependencies {
     
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
+
+    // Development
+    developmentOnly("org.springframework.boot:spring-boot-devtools")
 }
 
 vaadin {
