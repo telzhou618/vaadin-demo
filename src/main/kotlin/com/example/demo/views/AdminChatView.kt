@@ -297,7 +297,8 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
                                 if (isAdmin) style.set("opacity", "0.9")
                             }
 
-                            div(msg.content) {
+                            div {
+                                text = msg.content
                                 style.set("line-height", "1.5")
                                 style.set("margin-bottom", "4px")
                             }
