@@ -1,5 +1,6 @@
 package com.example.demo.views
 
+import com.example.demo.components.EmojiPicker
 import com.example.demo.service.ChatSession
 import com.example.demo.service.CustomerChatService
 import com.vaadin.flow.component.AttachEvent
@@ -57,6 +58,18 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
             style.set("border-radius", "20px")
         }
         
+        val emojiButton = Button("😊").apply {
+            addThemeVariants(ButtonVariant.LUMO_TERTIARY)
+            style.set("border-radius", "50%")
+            style.set("min-width", "40px")
+            style.set("font-size", "20px")
+            addClickListener {
+                ui.ifPresent { ui ->
+                    EmojiPicker.show(ui, messageField, EmojiPicker.Position.CENTER)
+                }
+            }
+        }
+        
         val sendButton = Button("发送").apply {
             addThemeVariants(ButtonVariant.LUMO_PRIMARY)
             style.set("border-radius", "20px")
@@ -65,7 +78,7 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
         
         messageField.addKeyPressListener(Key.ENTER, { _ -> sendMessage() })
         
-        val inputLayout = HorizontalLayout(messageField, sendButton).apply {
+        val inputLayout = HorizontalLayout(messageField, emojiButton, sendButton).apply {
             setWidthFull()
             addClassName("p-m")
             style.set("background-color", "white")

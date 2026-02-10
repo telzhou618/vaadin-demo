@@ -1,5 +1,6 @@
 package com.example.demo.views
 
+import com.example.demo.components.EmojiPicker
 import com.example.demo.service.ChatSession
 import com.example.demo.service.CustomerChatService
 import com.github.mvysny.karibudsl.v10.h3
@@ -19,6 +20,7 @@ import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
+import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Route
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.format.DateTimeFormatter
@@ -206,6 +208,18 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             setWidthFull()
             style.set("border-radius", "20px")
         }
+        
+        val emojiButton = Button("😊").apply {
+            addThemeVariants(ButtonVariant.LUMO_TERTIARY)
+            style.set("border-radius", "50%")
+            style.set("min-width", "40px")
+            style.set("font-size", "20px")
+            addClickListener {
+                ui.ifPresent { ui ->
+                    EmojiPicker.show(ui, messageField, EmojiPicker.Position.RIGHT)
+                }
+            }
+        }
 
         val sendButton = Button("发送").apply {
             addThemeVariants(ButtonVariant.LUMO_PRIMARY)
@@ -231,7 +245,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             }
         })
 
-        val inputLayout = HorizontalLayout(messageField, sendButton).apply {
+        val inputLayout = HorizontalLayout(messageField, emojiButton, sendButton).apply {
             setWidthFull()
             addClassName("p-m")
             style.set("background-color", "white")
