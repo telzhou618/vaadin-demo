@@ -9,8 +9,6 @@ import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.Key
 import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.ButtonVariant
-import com.vaadin.flow.component.html.Div
-import com.vaadin.flow.component.html.Span
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
@@ -19,7 +17,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.format.DateTimeFormatter
 
 @Route("guest-chat")
-class GuestChatView(@Autowired private val chatService: CustomerChatService) : KComposite() {
+class GuestChatView(
+    @Autowired private val chatService: CustomerChatService
+) : VerticalLayout() {
 
     private lateinit var session: ChatSession
     private lateinit var messagesArea: VerticalLayout
@@ -27,30 +27,29 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : K
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     private var lastMessageCount = 0
 
-    private val root = ui {
+    init {
+        setSizeFull()
+        style.set("min-height", "100vh")
         verticalLayout {
             setSizeFull()
             maxWidth = "900px"
             style.set("margin", "0 auto")
-            isPadding = false
-
             // 头部
             horizontalLayout {
                 setWidthFull()
                 addClassNames("bg-primary", "text-primary-contrast", "p-l")
                 style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-                
                 h2("💬 在线客服") {
                     style.set("margin", "0")
                 }
             }
-
             // 消息区域
             messagesArea = verticalLayout {
                 setWidthFull()
                 addClassName("p-m")
                 style.set("flex", "1")
                 style.set("overflow-y", "auto")
+                style.set("overflow-x", "hidden")
                 style.set("background", "linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%)")
             }
 
@@ -90,6 +89,7 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : K
             }
         }
     }
+
 
     override fun onAttach(attachEvent: AttachEvent) {
         super.onAttach(attachEvent)
@@ -196,11 +196,11 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : K
                 messagesArea.removeAll()
                 session.messages.forEach { msg ->
                     val isAdmin = msg.from == "客服"
-                    
+
                     messagesArea.horizontalLayout {
                         setWidthFull()
-                        justifyContentMode = if (isAdmin) FlexComponent.JustifyContentMode.START 
-                                            else FlexComponent.JustifyContentMode.END
+                        justifyContentMode = if (isAdmin) FlexComponent.JustifyContentMode.START
+                        else FlexComponent.JustifyContentMode.END
 
                         div {
                             addClassName("p-m")

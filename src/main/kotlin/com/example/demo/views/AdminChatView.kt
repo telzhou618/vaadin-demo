@@ -19,7 +19,9 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.format.DateTimeFormatter
 
 @Route("admin-chat")
-class AdminChatView(@Autowired private val chatService: CustomerChatService) : HorizontalLayout() {
+class AdminChatView(
+    @Autowired private val chatService: CustomerChatService
+) : HorizontalLayout() {
 
     private val userList = VerticalLayout()
     private val chatArea = VerticalLayout()
