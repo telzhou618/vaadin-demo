@@ -3,18 +3,15 @@ package com.example.demo.views
 import com.example.demo.components.EmojiPicker
 import com.example.demo.service.ChatSession
 import com.example.demo.service.CustomerChatService
-import com.github.mvysny.karibudsl.v10.h2
-import com.github.mvysny.karibudsl.v10.horizontalLayout
+import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.AttachEvent
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.Key
 import com.vaadin.flow.component.UI
-import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.html.Div
 import com.vaadin.flow.component.html.Span
 import com.vaadin.flow.component.orderedlayout.FlexComponent
-import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
 import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Route
@@ -22,85 +19,82 @@ import org.springframework.beans.factory.annotation.Autowired
 import java.time.format.DateTimeFormatter
 
 @Route("guest-chat")
-class GuestChatView(@Autowired private val chatService: CustomerChatService) : VerticalLayout() {
+class GuestChatView(@Autowired private val chatService: CustomerChatService) : KComposite() {
 
     private lateinit var session: ChatSession
-    private val messagesArea = VerticalLayout()
-    private val messageField = TextField()
+    private lateinit var messagesArea: VerticalLayout
+    private lateinit var messageField: TextField
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
     private var lastMessageCount = 0
 
-    init {
-        setSizeFull()
-        maxWidth = "900px"
-        style.set("margin", "0 auto")
-        isPadding = false
+    private val root = ui {
+        verticalLayout {
+            setSizeFull()
+            maxWidth = "900px"
+            style.set("margin", "0 auto")
+            isPadding = false
 
-        // 头部
-        val header = horizontalLayout {
-            setWidthFull()
-            addClassNames("bg-primary", "text-primary-contrast", "p-l")
-            style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            h2("💬 在线客服") {
-                style.set("margin", "0")
-                style.set("color", "white")
-            }
-        }
-        // 消息区域
-        messagesArea.apply {
-            setWidthFull()
-            addClassName("p-m")
-            style.set("flex", "1")
-            style.set("overflow-y", "auto")
-            style.set("background", "linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%)")
-        }
-
-        // 输入区域
-        messageField.apply {
-            placeholder = "输入消息..."
-            setWidthFull()
-            style.set("border-radius", "20px")
-        }
-
-        val emojiButton = Button("😊").apply {
-            addThemeVariants(ButtonVariant.LUMO_TERTIARY)
-            style.set("border-radius", "50%")
-            style.set("min-width", "40px")
-            style.set("font-size", "20px")
-            addClickListener {
-                ui.ifPresent { ui ->
-                    EmojiPicker.show(ui, messageField, EmojiPicker.Position.CENTER)
+            // 头部
+            horizontalLayout {
+                setWidthFull()
+                addClassNames("bg-primary", "text-primary-contrast", "p-l")
+                style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
+                
+                h2("💬 在线客服") {
+                    style.set("margin", "0")
                 }
             }
+
+            // 消息区域
+            messagesArea = verticalLayout {
+                setWidthFull()
+                addClassName("p-m")
+                style.set("flex", "1")
+                style.set("overflow-y", "auto")
+                style.set("background", "linear-gradient(to bottom, #f5f7fa 0%, #e8ecf1 100%)")
+            }
+
+            // 输入区域
+            horizontalLayout {
+                setWidthFull()
+                addClassName("p-m")
+                style.set("background-color", "white")
+                style.set("box-shadow", "0 -2px 4px rgba(0,0,0,0.05)")
+
+                messageField = textField {
+                    placeholder = "输入消息..."
+                    setWidthFull()
+                    style.set("border-radius", "20px")
+                    addKeyPressListener(Key.ENTER, { sendMessage() })
+                }
+
+                button("😊") {
+                    addThemeVariants(ButtonVariant.LUMO_TERTIARY)
+                    style.set("border-radius", "50%")
+                    style.set("min-width", "40px")
+                    style.set("font-size", "20px")
+                    onLeftClick {
+                        ui.ifPresent { ui ->
+                            EmojiPicker.show(ui, messageField, EmojiPicker.Position.CENTER)
+                        }
+                    }
+                }
+
+                button("发送") {
+                    addThemeVariants(ButtonVariant.LUMO_PRIMARY)
+                    style.set("border-radius", "20px")
+                    onLeftClick { sendMessage() }
+                }
+
+                this@verticalLayout.expand(messagesArea)
+            }
         }
-
-        val sendButton = Button("发送").apply {
-            addThemeVariants(ButtonVariant.LUMO_PRIMARY)
-            style.set("border-radius", "20px")
-            addClickListener { sendMessage() }
-        }
-
-        messageField.addKeyPressListener(Key.ENTER, { _ -> sendMessage() })
-
-        val inputLayout = HorizontalLayout(messageField, emojiButton, sendButton).apply {
-            setWidthFull()
-            addClassName("p-m")
-            style.set("background-color", "white")
-            style.set("box-shadow", "0 -2px 4px rgba(0,0,0,0.05)")
-            expand(messageField)
-        }
-
-        add(header, messagesArea, inputLayout)
-        expand(messagesArea)
     }
 
     override fun onAttach(attachEvent: AttachEvent) {
         super.onAttach(attachEvent)
         ui.ifPresent { ui ->
-            // 初始化标题闪烁功能
             initTitleBlink(ui)
-
-            // 从浏览器 localStorage 获取或生成客户端 ID
             ui.page.executeJs(
                 """
                 let clientId = localStorage.getItem('guestClientId');
@@ -122,8 +116,10 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
 
     override fun onDetach(detachEvent: DetachEvent) {
         super.onDetach(detachEvent)
-        chatService.updateGuestStatus(session.sessionId, false)
-        chatService.unregisterGuestRefresh(session.sessionId)
+        if (::session.isInitialized) {
+            chatService.updateGuestStatus(session.sessionId, false)
+            chatService.unregisterGuestRefresh(session.sessionId)
+        }
     }
 
     private fun sendMessage() {
@@ -143,7 +139,6 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
             window.titleBlinkInterval = null;
             window.isPageVisible = true;
             
-            // 监听页面可见性变化
             document.addEventListener('visibilitychange', () => {
                 window.isPageVisible = !document.hidden;
                 if (window.isPageVisible && window.titleBlinkInterval) {
@@ -153,7 +148,6 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
                 }
             });
             
-            // 监听页面焦点
             window.addEventListener('focus', () => {
                 window.isPageVisible = true;
                 if (window.titleBlinkInterval) {
@@ -185,15 +179,11 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
     }
 
     private fun startTitleBlink() {
-        ui.ifPresent { ui ->
-            ui.page.executeJs("if (window.startTitleBlink) window.startTitleBlink();")
-        }
+        ui.ifPresent { it.page.executeJs("if (window.startTitleBlink) window.startTitleBlink();") }
     }
 
     private fun stopTitleBlink() {
-        ui.ifPresent { ui ->
-            ui.page.executeJs("if (window.stopTitleBlink) window.stopTitleBlink();")
-        }
+        ui.ifPresent { it.page.executeJs("if (window.stopTitleBlink) window.stopTitleBlink();") }
     }
 
     private fun refreshMessages() {
@@ -206,58 +196,51 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
                 messagesArea.removeAll()
                 session.messages.forEach { msg ->
                     val isAdmin = msg.from == "客服"
-                    val bubble = Div().apply {
-                        addClassName("p-m")
-                        style.set("border-radius", "12px")
-                        style.set("max-width", "70%")
-                        style.set("word-wrap", "break-word")
-
-                        if (isAdmin) {
-                            style.set("background-color", "white")
-                            style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.12)")
-                        } else {
-                            addClassNames("bg-primary", "text-primary-contrast")
-                            style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.2)")
-                        }
-
-                        // 发送者名称
-                        add(Span(msg.from).apply {
-                            addClassName("text-xs")
-                            style.set("font-weight", "600")
-                            style.set("display", "block")
-                            style.set("margin-bottom", "4px")
-                            if (!isAdmin) {
-                                style.set("opacity", "0.9")
-                            }
-                        })
-
-                        // 消息内容
-                        add(Div(msg.content).apply {
-                            style.set("line-height", "1.5")
-                            style.set("margin-bottom", "4px")
-                        })
-
-                        // 时间戳
-                        add(Span(msg.timestamp.format(timeFormatter)).apply {
-                            addClassName("text-xs")
-                            style.set("opacity", "0.7")
-                            style.set("display", "block")
-                            style.set("text-align", "right")
-                        })
-                    }
-
-                    val wrapper = HorizontalLayout(bubble).apply {
+                    
+                    messagesArea.horizontalLayout {
                         setWidthFull()
-                        justifyContentMode =
-                            if (isAdmin) FlexComponent.JustifyContentMode.START else FlexComponent.JustifyContentMode.END
+                        justifyContentMode = if (isAdmin) FlexComponent.JustifyContentMode.START 
+                                            else FlexComponent.JustifyContentMode.END
+
+                        div {
+                            addClassName("p-m")
+                            style.set("border-radius", "12px")
+                            style.set("max-width", "70%")
+                            style.set("word-wrap", "break-word")
+
+                            if (isAdmin) {
+                                style.set("background-color", "white")
+                                style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.12)")
+                            } else {
+                                addClassNames("bg-primary", "text-primary-contrast")
+                                style.set("box-shadow", "0 1px 3px rgba(0,0,0,0.2)")
+                            }
+
+                            span(msg.from) {
+                                addClassName("text-xs")
+                                style.set("font-weight", "600")
+                                style.set("display", "block")
+                                style.set("margin-bottom", "4px")
+                                if (!isAdmin) style.set("opacity", "0.9")
+                            }
+
+                            div(msg.content) {
+                                style.set("line-height", "1.5")
+                                style.set("margin-bottom", "4px")
+                            }
+
+                            span(msg.timestamp.format(timeFormatter)) {
+                                addClassName("text-xs")
+                                style.set("opacity", "0.7")
+                                style.set("display", "block")
+                                style.set("text-align", "right")
+                            }
+                        }
                     }
-                    messagesArea.add(wrapper)
                 }
 
-                // 滚动到底部
                 messagesArea.element.executeJs("this.scrollTop = this.scrollHeight")
 
-                // 如果有新的客服消息，触发标题闪烁
                 if (hasNewAdminMessage) {
                     startTitleBlink()
                 }
