@@ -126,7 +126,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             setWidthFull()
             addClassName("p-m")
             alignItems = FlexComponent.Alignment.CENTER
-            justifyContentMode = FlexComponent.JustifyContentMode.CENTER
+            justifyContentMode = FlexComponent.JustifyContentMode.START
 
             style.set("cursor", "pointer")
             style.set("border-bottom", "1px solid var(--lumo-contrast-5pct)")
