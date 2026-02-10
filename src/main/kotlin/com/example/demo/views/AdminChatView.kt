@@ -34,7 +34,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         isSpacing = false
 
         // 左侧用户列表面板
-        val leftPanel = VerticalLayout().apply {
+        val leftPanel = verticalLayout {
             width = "320px"
             setHeightFull()
             isPadding = false
@@ -42,19 +42,19 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             style.set("border-right", "1px solid var(--lumo-contrast-10pct)")
 
             // 标题栏
-            val header = HorizontalLayout().apply {
+            horizontalLayout {
                 setWidthFull()
                 addClassNames("bg-primary", "text-primary-contrast", "p-l")
                 style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
                 alignItems = FlexComponent.Alignment.CENTER
                 defaultVerticalComponentAlignment = FlexComponent.Alignment.CENTER
 
-                add(VaadinIcon.USERS.create().apply {
+                icon(VaadinIcon.USERS) {
                     style.set("margin-right", "8px")
-                })
-                add(com.vaadin.flow.component.html.H3("客服管理端").apply {
+                }
+                h3("客服管理端") {
                     style.set("margin", "0")
-                })
+                }
             }
 
             // 用户列表
@@ -66,7 +66,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
                 style.set("background-color", "white")
             }
 
-            add(header, userList)
+            add(userList)
             expand(userList)
         }
 
@@ -79,10 +79,10 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             alignItems = FlexComponent.Alignment.CENTER
             justifyContentMode = FlexComponent.JustifyContentMode.CENTER
 
-            add(Span("👈 请选择用户开始聊天").apply {
+            span("👈 请选择用户开始聊天") {
                 addClassName("text-secondary")
                 style.set("font-size", "18px")
-            })
+            }
         }
 
         add(leftPanel, chatArea)
