@@ -18,6 +18,15 @@ dependencies {
     
     implementation("org.springframework.boot:spring-boot-starter-web")
     
+    // MyBatis-Plus
+    implementation("com.baomidou:mybatis-plus-spring-boot3-starter:3.5.5")
+    
+    // MySQL
+    implementation("com.mysql:mysql-connector-j:8.3.0")
+    
+    // 数据库连接池
+    implementation("com.zaxxer:HikariCP")
+    
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testImplementation(kotlin("test"))
 }

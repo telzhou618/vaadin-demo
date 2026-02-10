@@ -1,5 +1,10 @@
 package com.example.demo.service
 
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper
+import com.example.demo.entity.ChatMessage as ChatMessageEntity
+import com.example.demo.entity.ChatSessionEntity
+import com.example.demo.mapper.ChatMessageMapper
+import com.example.demo.mapper.ChatSessionMapper
 import com.vaadin.flow.component.UI
 import org.springframework.stereotype.Service
 import java.time.LocalDateTime
@@ -22,7 +27,10 @@ data class ChatSession(
 )
 
 @Service
-class CustomerChatService {
+class CustomerChatService(
+    private val chatMessageMapper: ChatMessageMapper,
+    private val chatSessionMapper: ChatSessionMapper
+) {
     private val sessions = ConcurrentHashMap<String, ChatSession>()
     private val adminUIs = ConcurrentHashMap.newKeySet<UI>()
     private val adminRefreshCallbacks = ConcurrentHashMap<UI, () -> Unit>()
@@ -36,8 +44,30 @@ class CustomerChatService {
         if (existingSession != null) {
             existingSession.guestUI = guestUI
             existingSession.isOnline = true
+            updateSessionOnlineStatus(clientId, true)
             notifyAdmins()
             return existingSession
+        }
+        
+        // 从数据库查找历史会话
+        val dbSession = chatSessionMapper.selectOne(
+            QueryWrapper<ChatSessionEntity>().eq("client_id", clientId)
+        )
+        
+        if (dbSession != null) {
+            // 恢复历史会话
+            val messages = loadMessagesFromDB(dbSession.sessionId)
+            val session = ChatSession(
+                sessionId = dbSession.sessionId,
+                guestName = dbSession.guestName,
+                messages = messages,
+                guestUI = guestUI,
+                isOnline = true
+            )
+            sessions[clientId] = session
+            updateSessionOnlineStatus(clientId, true)
+            notifyAdmins()
+            return session
         }
         
         // 创建新会话
@@ -45,9 +75,19 @@ class CustomerChatService {
         val session = ChatSession(clientId, guestName, guestUI = guestUI)
         sessions[clientId] = session
         
+        // 保存会话到数据库
+        val sessionEntity = ChatSessionEntity(
+            sessionId = clientId,
+            guestName = guestName,
+            clientId = clientId,
+            isOnline = true
+        )
+        chatSessionMapper.insert(sessionEntity)
+        
         // 发送欢迎消息
         val welcomeMsg = ChatMessage("客服", "您好！欢迎咨询，请问有什么可以帮助您的？")
         session.messages.add(welcomeMsg)
+        saveMessageToDB(clientId, welcomeMsg)
         
         // 通知所有管理员有新用户
         notifyAdmins()
@@ -62,6 +102,9 @@ class CustomerChatService {
         session.messages.add(message)
         session.unreadCount++
         
+        // 保存到数据库
+        saveMessageToDB(sessionId, message)
+        
         // 通知管理员
         notifyAdmins()
     }
@@ -72,6 +115,9 @@ class CustomerChatService {
         val message = ChatMessage("客服", content)
         session.messages.add(message)
         session.unreadCount = 0
+        
+        // 保存到数据库
+        saveMessageToDB(sessionId, message)
         
         // 推送给游客
         session.guestUI?.access {
@@ -87,6 +133,11 @@ class CustomerChatService {
     fun registerAdmin(ui: UI, refreshCallback: () -> Unit) {
         adminUIs.add(ui)
         adminRefreshCallbacks[ui] = refreshCallback
+        
+        // 首次加载时从数据库恢复所有会话
+        if (sessions.isEmpty()) {
+            loadAllSessionsFromDB()
+        }
     }
     
     // 注销管理员UI
@@ -112,6 +163,7 @@ class CustomerChatService {
             if (!isOnline) {
                 it.guestUI = null
             }
+            updateSessionOnlineStatus(sessionId, isOnline)
             notifyAdmins()
         }
     }
@@ -138,6 +190,54 @@ class CustomerChatService {
             ui.access {
                 adminRefreshCallbacks[ui]?.invoke()
                 ui.push()
+            }
+        }
+    }
+    
+    // 保存消息到数据库
+    private fun saveMessageToDB(sessionId: String, message: ChatMessage) {
+        val entity = ChatMessageEntity(
+            sessionId = sessionId,
+            fromUser = message.from,
+            content = message.content,
+            createTime = message.timestamp
+        )
+        chatMessageMapper.insert(entity)
+    }
+    
+    // 从数据库加载消息
+    private fun loadMessagesFromDB(sessionId: String): MutableList<ChatMessage> {
+        val entities = chatMessageMapper.selectList(
+            QueryWrapper<ChatMessageEntity>()
+                .eq("session_id", sessionId)
+                .orderByAsc("create_time")
+        )
+        return entities.map { 
+            ChatMessage(it.fromUser, it.content, it.createTime) 
+        }.toMutableList()
+    }
+    
+    // 更新会话在线状态
+    private fun updateSessionOnlineStatus(sessionId: String, isOnline: Boolean) {
+        chatSessionMapper.update(
+            ChatSessionEntity(sessionId = sessionId, guestName = "", clientId = "", isOnline = isOnline),
+            QueryWrapper<ChatSessionEntity>().eq("session_id", sessionId)
+        )
+    }
+    
+    // 从数据库加载所有会话
+    private fun loadAllSessionsFromDB() {
+        val dbSessions = chatSessionMapper.selectList(null)
+        dbSessions.forEach { dbSession ->
+            if (!sessions.containsKey(dbSession.sessionId)) {
+                val messages = loadMessagesFromDB(dbSession.sessionId)
+                val session = ChatSession(
+                    sessionId = dbSession.sessionId,
+                    guestName = dbSession.guestName,
+                    messages = messages,
+                    isOnline = false
+                )
+                sessions[dbSession.sessionId] = session
             }
         }
     }
