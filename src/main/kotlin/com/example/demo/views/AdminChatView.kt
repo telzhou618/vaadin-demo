@@ -31,6 +31,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
     private val messagesArea = VerticalLayout()
     private var selectedSessionId: String? = null
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    private var headerStatusSpan: Span? = null
 
     init {
         setSizeFull()
@@ -107,6 +108,17 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
                     val userItem = createUserItem(session)
                     userList.add(userItem)
                 }
+                
+                // 同步更新聊天区域头部的在线状态
+                selectedSessionId?.let { sessionId ->
+                    chatService.getSession(sessionId)?.let { session ->
+                        headerStatusSpan?.let { statusSpan ->
+                            statusSpan.text = if (session.isOnline) "● 在线" else "○ 离线"
+                            statusSpan.removeClassNames("text-success", "text-disabled")
+                            statusSpan.addClassName(if (session.isOnline) "text-success" else "text-disabled")
+                        }
+                    }
+                }
             }
         }
     }
@@ -177,7 +189,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             h3(session.guestName) {
                 style.set("margin", "0")
             }
-            span(if (session.isOnline) "● 在线" else "○ 离线") {
+            headerStatusSpan = span(if (session.isOnline) "● 在线" else "○ 离线") {
                 addClassName(if (session.isOnline) "text-success" else "text-disabled")
             }
         }
