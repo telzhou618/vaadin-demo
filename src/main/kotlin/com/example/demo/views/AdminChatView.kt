@@ -3,24 +3,19 @@ package com.example.demo.views
 import com.example.demo.components.EmojiPicker
 import com.example.demo.service.ChatSession
 import com.example.demo.service.CustomerChatService
-import com.github.mvysny.karibudsl.v10.h3
-import com.github.mvysny.karibudsl.v10.horizontalLayout
-import com.github.mvysny.karibudsl.v10.span
-import com.github.mvysny.karibudsl.v10.textField
+import com.github.mvysny.karibudsl.v10.*
 import com.vaadin.flow.component.AttachEvent
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.Key
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.html.Div
-import com.vaadin.flow.component.html.H3
 import com.vaadin.flow.component.html.Span
 import com.vaadin.flow.component.icon.Icon
 import com.vaadin.flow.component.icon.VaadinIcon
 import com.vaadin.flow.component.orderedlayout.FlexComponent
 import com.vaadin.flow.component.orderedlayout.HorizontalLayout
 import com.vaadin.flow.component.orderedlayout.VerticalLayout
-import com.vaadin.flow.component.textfield.TextField
 import com.vaadin.flow.router.Route
 import org.springframework.beans.factory.annotation.Autowired
 import java.time.format.DateTimeFormatter
@@ -40,20 +35,24 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
         isPadding = false
 
         // 左侧用户列表
-        val leftPanel = VerticalLayout().apply {
+        val leftPanel = verticalLayout {
             width = "320px"
             setHeightFull()
             isPadding = false
             style.set("border-right", "1px solid var(--lumo-contrast-10pct)")
 
-            add(HorizontalLayout(H3("👥 客服管理端").apply {
-                style.set("margin", "0")
-            }).apply {
+            // 标题栏
+            horizontalLayout {
                 setWidthFull()
                 addClassNames("bg-primary", "text-primary-contrast", "p-l")
                 style.set("box-shadow", "0 2px 4px rgba(0,0,0,0.1)")
-            })
-
+                icon(VaadinIcon.USERS)
+                h3("客服管理端") {
+                    style.set("color", "white")
+                    style.set("margin", "0")
+                }
+            }
+            // 用户列表
             userList.apply {
                 setWidthFull()
                 style.set("overflow-y", "auto")
@@ -110,7 +109,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
                     val userItem = createUserItem(session)
                     userList.add(userItem)
                 }
-                
+
                 // 同步更新聊天区域头部的在线状态
                 selectedSessionId?.let { sessionId ->
                     chatService.getSession(sessionId)?.let { session ->
@@ -208,7 +207,7 @@ class AdminChatView(@Autowired private val chatService: CustomerChatService) : H
             setWidthFull()
             style.set("border-radius", "20px")
         }
-        
+
         val emojiButton = Button("😊").apply {
             addThemeVariants(ButtonVariant.LUMO_TERTIARY)
             style.set("border-radius", "50%")
