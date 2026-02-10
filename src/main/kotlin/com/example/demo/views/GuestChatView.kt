@@ -29,8 +29,12 @@ class GuestChatView(
 
     init {
         setSizeFull()
+        isSpacing = false
+        isPadding = false
         style.set("min-height", "100vh")
         verticalLayout {
+            isSpacing = false
+            isPadding = false
             setSizeFull()
             maxWidth = "900px"
             style.set("margin", "0 auto")
