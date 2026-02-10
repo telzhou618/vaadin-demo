@@ -6,6 +6,7 @@ import com.example.demo.service.CustomerChatService
 import com.vaadin.flow.component.AttachEvent
 import com.vaadin.flow.component.DetachEvent
 import com.vaadin.flow.component.Key
+import com.vaadin.flow.component.UI
 import com.vaadin.flow.component.button.Button
 import com.vaadin.flow.component.button.ButtonVariant
 import com.vaadin.flow.component.html.Div
@@ -26,6 +27,7 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
     private val messagesArea = VerticalLayout()
     private val messageField = TextField()
     private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm")
+    private var lastMessageCount = 0
     
     init {
         setSizeFull()
@@ -93,6 +95,9 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
     override fun onAttach(attachEvent: AttachEvent) {
         super.onAttach(attachEvent)
         ui.ifPresent { ui ->
+            // 初始化标题闪烁功能
+            initTitleBlink(ui)
+            
             // 从浏览器 localStorage 获取或生成客户端 ID
             ui.page.executeJs(
                 """
@@ -108,6 +113,7 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
                 session = chatService.createGuestSession(ui, clientId)
                 chatService.registerGuestRefresh(session.sessionId) { refreshMessages() }
                 refreshMessages()
+                lastMessageCount = session.messages.size
             }
         }
     }
@@ -124,12 +130,77 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
             chatService.sendGuestMessage(session.sessionId, content)
             messageField.clear()
             refreshMessages()
+            stopTitleBlink()
+        }
+    }
+    
+    private fun initTitleBlink(ui: UI) {
+        ui.page.executeJs(
+            """
+            window.originalTitle = document.title;
+            window.titleBlinkInterval = null;
+            window.isPageVisible = true;
+            
+            // 监听页面可见性变化
+            document.addEventListener('visibilitychange', () => {
+                window.isPageVisible = !document.hidden;
+                if (window.isPageVisible && window.titleBlinkInterval) {
+                    clearInterval(window.titleBlinkInterval);
+                    window.titleBlinkInterval = null;
+                    document.title = window.originalTitle;
+                }
+            });
+            
+            // 监听页面焦点
+            window.addEventListener('focus', () => {
+                window.isPageVisible = true;
+                if (window.titleBlinkInterval) {
+                    clearInterval(window.titleBlinkInterval);
+                    window.titleBlinkInterval = null;
+                    document.title = window.originalTitle;
+                }
+            });
+            
+            window.startTitleBlink = () => {
+                if (!window.isPageVisible && !window.titleBlinkInterval) {
+                    let toggle = false;
+                    window.titleBlinkInterval = setInterval(() => {
+                        document.title = toggle ? window.originalTitle : '💬 新消息！';
+                        toggle = !toggle;
+                    }, 1000);
+                }
+            };
+            
+            window.stopTitleBlink = () => {
+                if (window.titleBlinkInterval) {
+                    clearInterval(window.titleBlinkInterval);
+                    window.titleBlinkInterval = null;
+                    document.title = window.originalTitle;
+                }
+            };
+            """
+        )
+    }
+    
+    private fun startTitleBlink() {
+        ui.ifPresent { ui ->
+            ui.page.executeJs("if (window.startTitleBlink) window.startTitleBlink();")
+        }
+    }
+    
+    private fun stopTitleBlink() {
+        ui.ifPresent { ui ->
+            ui.page.executeJs("if (window.stopTitleBlink) window.stopTitleBlink();")
         }
     }
     
     private fun refreshMessages() {
         ui.ifPresent { ui ->
             ui.access {
+                val currentMessageCount = session.messages.size
+                val hasNewAdminMessage = currentMessageCount > lastMessageCount && 
+                    session.messages.lastOrNull()?.from == "客服"
+                
                 messagesArea.removeAll()
                 session.messages.forEach { msg ->
                     val isAdmin = msg.from == "客服"
@@ -182,6 +253,13 @@ class GuestChatView(@Autowired private val chatService: CustomerChatService) : V
                 
                 // 滚动到底部
                 messagesArea.element.executeJs("this.scrollTop = this.scrollHeight")
+                
+                // 如果有新的客服消息，触发标题闪烁
+                if (hasNewAdminMessage) {
+                    startTitleBlink()
+                }
+                
+                lastMessageCount = currentMessageCount
             }
         }
     }
