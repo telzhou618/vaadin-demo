@@ -44,3 +44,4 @@ frontend/generated/
 pnpmfile.js
 package-lock.json
 webpack.generated.js
+/frontend/
