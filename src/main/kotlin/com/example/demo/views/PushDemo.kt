@@ -29,7 +29,7 @@ class PushDemo(@Autowired private val broadcastService: BroadcastService) : KCom
             }
 
             button("向所有客户端发送消息") {
-                addThemeVariants(com.vaadin.flow.component.button.ButtonVariant.LUMO_PRIMARY)
+                themeName = "primary"
                 onLeftClick {
                     val message = messageField.value
                     if (message.isNotBlank()) {
