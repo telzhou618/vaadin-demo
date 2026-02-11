@@ -53,6 +53,7 @@ class MainView : KComposite() {
             hr()
             
             h3("日志查询系统")
+            routerLink(text = "日志监控仪表板", viewType = LogDashboardView::class)
             routerLink(text = "日志查询界面", viewType = LogQueryView::class)
         }
     }

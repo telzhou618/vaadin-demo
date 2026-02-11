@@ -27,3 +27,9 @@ enum class LogLevel(val displayName: String, val color: String) {
     ERROR("ERROR", "#dc3545"),
     FATAL("FATAL", "#721c24")
 }
+
+enum class AppName(val appName: String) {
+    USER("user"),
+    POST("post"),
+    TASK("task")
+}

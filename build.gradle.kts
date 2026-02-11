@@ -12,6 +12,7 @@ repositories {
 
 dependencies {
     implementation("com.vaadin:vaadin-spring-boot-starter:24.3.5")
+    // implementation("com.vaadin:vaadin-charts-flow:24.3.5")  // 商业组件，需要许可证
     implementation("org.jetbrains.kotlin:kotlin-stdlib")
     implementation("org.jetbrains.kotlin:kotlin-reflect")
     implementation("com.github.mvysny.karibudsl:karibu-dsl:2.1.2")
