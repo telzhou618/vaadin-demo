@@ -49,6 +49,11 @@ class MainView : KComposite() {
             
             h3("微信界面 Demo")
             routerLink(text = "微信网页版", viewType = WeChatView::class)
+            
+            hr()
+            
+            h3("日志查询系统")
+            routerLink(text = "日志查询界面", viewType = LogQueryView::class)
         }
     }
 }
