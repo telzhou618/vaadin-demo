@@ -143,7 +143,7 @@ class LogQueryView(
                         setWidthFull()
                         
                         levelCheckboxGroup = checkBoxGroup<LogLevel> {
-                            setLabel("日志级别")
+                            label = "日志级别"
                             setItems(LogLevel.entries)
                             setItemLabelGenerator { it.displayName }
                             value = LogLevel.entries.toSet()
