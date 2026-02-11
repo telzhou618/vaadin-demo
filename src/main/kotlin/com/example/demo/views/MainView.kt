@@ -44,6 +44,11 @@ class MainView : KComposite() {
             h3("客服系统 Demo")
             routerLink(text = "游客咨询页面", viewType = GuestChatView::class)
             routerLink(text = "客服管理端", viewType = AdminChatView::class)
+            
+            hr()
+            
+            h3("微信界面 Demo")
+            routerLink(text = "微信网页版", viewType = WeChatView::class)
         }
     }
 }
